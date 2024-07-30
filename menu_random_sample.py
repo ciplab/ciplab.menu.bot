@@ -75,11 +75,11 @@ def lambda_handler(event, context):
         print(f"[DEBUG] row: {row}")
         menus.append(row[0])
     print(f"[INFO] menus: {menus}")
-    selected_menu = random.choice(menus).strip()
+    selected_menu = random.sample(menus, 5)
     print(f"[INFO] selected_menu: {selected_menu}")
     # Send the selected menu to slack
     slack_message = {
-        'text': f"오늘의 메뉴 추천은 {selected_menu}입니다!"
+        'text': f"오늘의 메뉴 추천은 :one: {selected_menu[0]}, :two: {selected_menu[1]}, :three: {selected_menu[2]}, :four: {selected_menu[3]}, :five: {selected_menu[4]} 입니다!"
     }
     requests.post(response_url, data=json.dumps(slack_message), headers={'Content-Type': 'application/json'})
     # Return the response
