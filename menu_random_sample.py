@@ -20,47 +20,20 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 
 
 def lambda_handler(event, context):
-    # # DEBUG for internet access
-    # import requests
-    # try:
-    #     response = requests.get("https://httpbin.org/ip")
-    #     return {
-    #         'statusCode': 200,
-    #         'body': json.dumps({
-    #             'message': 'Success',
-    #             'response': response.json()
-    #         })
-    #     }
-    # except requests.exceptions.RequestException as e:
-    #     return {
-    #         'statusCode': 500,
-    #         'body': json.dumps({
-    #             'message': 'Failed to connect',
-    #             'error': str(e)
-    #         })
-    #     }
-    # Get the slack api response_url from the event
+    # Get the slack response url and sample condition
     print(f"[DEBUG] event: {event}")
     print(f"[DEBUG] context: {context}")
     if 'body' in event:
         body = urllib.parse.parse_qs(event['body'])
         print(f"[DEBUG] body: {body}")
         response_url = body.get('response_url', DEFAULT_RESPONSE_URL)[0]
-        print(f"[INFO] response_url: {response_url}")
+        category = body.get('text', '')[0]
     else:
         print(f"[INFO] no body in event, maybe AWS EventBridge invoke the lambda")
         response_url = DEFAULT_RESPONSE_URL
-        print(f"[INFO] response_url: {response_url}")
-    # # DEBUG for reading service account file
-    # def read_and_print_service_account_file(file_path):
-    #     try:
-    #         with open(file_path, 'r') as file:
-    #             content = file.read()
-    #             print("File content:")
-    #             print(content)
-    #     except Exception as e:
-    #         print(f"Failed to read the file: {str(e)}")
-    # read_and_print_service_account_file(SERVICE_ACCOUNT_FILE)
+        category = ''
+    print(f"[INFO] response_url: {response_url}")
+    print(f"[INFO] category: {category}")
     # Get the menu list from google spreadsheets
     print(f"[INFO] try to get menu list from google spreadsheets")
     creds = service_account.Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
@@ -68,10 +41,7 @@ def lambda_handler(event, context):
     sheet = service.spreadsheets()
     result = sheet.values().get(spreadsheetId=SPREADSHEET_ID, range=RANGE_NAME).execute()
     values = result.get('values', [])
-    # print(f"[DEBUG] values: {values}")
     # Filter with category
-    category = body.get('text', '')[0]
-    print(f"[INFO] category: {category}")
     if category != '':
         new_values = []
         for row in values:
@@ -82,7 +52,6 @@ def lambda_handler(event, context):
     menus = []
     probs = []
     for row in values:
-        # print(f"[DEBUG] row: {row}")
         menus.append(row[0])
         if row[2].isdigit():
             probs.append(int(row[2]))
